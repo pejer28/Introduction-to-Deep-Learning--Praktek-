@@ -4,9 +4,10 @@ import pickle
 from PIL import Image
 import os
 
-model_directory = r'D:\semester 5\Mesin Learning\Introduction to Deep Learning (Praktek)'
-model_path = os.path.join(model_directory, r'best_model.pkl')
+# Path relatif untuk model
+model_path = "best_model.pkl"
 
+# Load model
 if os.path.exists(model_path):
     try:
         with open(model_path, 'rb') as model_file:
@@ -22,32 +23,37 @@ if os.path.exists(model_path):
             image_array = image_array.reshape(1, -1)  # Flatten ke bentuk 1D array
             return image_array
 
+        # Judul aplikasi
         st.title("Fashion MNIST Image Classifier")
         st.write("Unggah beberapa gambar item fashion (misalnya sepatu, tas, baju), dan model akan memprediksi kelas masing-masing.")
 
+        # File uploader
         uploaded_files = st.file_uploader("Pilih gambar...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
+        # Sidebar dengan tombol prediksi
         with st.sidebar:
             st.write("### Navigation")
-            predict_button = st.button("Predict")  # Tombol di sidebar
+            predict_button = st.button("Predict")
 
-        
-            if uploaded_files and predict_button:
-                st.write("### Hasil Prediksi")
+        # Proses prediksi
+        if uploaded_files and predict_button:
+            st.write("### Hasil Prediksi")
+            for uploaded_file in uploaded_files:
+                image = Image.open(uploaded_file)
+                processed_image = preprocess_image(image)
+                predictions = model.predict_proba(processed_image)
+                predicted_class = np.argmax(predictions)
+                confidence = np.max(predictions) * 100
 
-                for uploaded_file in uploaded_files:
-                    image = Image.open(uploaded_file)
-                    processed_image = preprocess_image(image)
-                    predictions = model.predict_proba(processed_image)
-                    predicted_class = np.argmax(predictions)
-                    confidence = np.max(predictions) * 100
+                # Tampilkan hasil prediksi
+                st.write(f"**Nama File:** {uploaded_file.name}")
+                st.write(f"**Kelas Prediksi:** {class_names[predicted_class]}")
+                st.write(f"**Confidence:** {confidence:.2f}%")
+                st.write("---")
 
-                    st.write(f"*Nama File:* {uploaded_file.name}")
-                    st.write(f"*Kelas Prediksi:* {class_names[predicted_class]}")
-                    st.write(f"*Confidence:* {confidence:.2f}%")
-                    st.write("---")
-
-        # Tampilkan gambar yang diunggah di halaman utama
+        # Tampilkan gambar yang diunggah
         if uploaded_files:
+            st.write("### Gambar yang Diupload")
             for uploaded_file in uploaded_files:
                 image = Image.open(uploaded_file)
                 st.image(image, caption=f"Gambar: {uploaded_file.name}", use_column_width=True)
@@ -56,4 +62,4 @@ if os.path.exists(model_path):
         st.error(f"Error: {str(e)}")
 
 else:
-    st.error("File model tidak ditemukan.")
+    st.error("File model tidak ditemukan. Pastikan model sudah diunggah di folder 'models'.")
